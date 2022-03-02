@@ -15,6 +15,8 @@ import { AppRoutingModule } from './app.routing.module';
 import { RecipeStartComponent } from './recipes/recipe-start/recipe-start.component';
 import { RecipeEditComponent } from './recipes/recipe-edit/recipe-edit.component';
 import { HttpClientModule } from '@angular/common/http';
+import { AuthComponent } from './auth/auth.component';
+import { LoaderSpinnerComponent } from './shared/loader-spinner/loader-spinner.component';
 
 @NgModule({
   declarations: [
@@ -29,6 +31,8 @@ import { HttpClientModule } from '@angular/common/http';
     ShoppingListComponent,
     ShoppingEditComponent,
     DropdownDirective,
+    AuthComponent,
+    LoaderSpinnerComponent
   ],
   imports: [BrowserModule, FormsModule, ReactiveFormsModule, AppRoutingModule, HttpClientModule],
   providers: [],
