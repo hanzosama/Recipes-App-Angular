@@ -1,7 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { catchError, Observable, throwError } from 'rxjs';
+import { Router } from '@angular/router';
+import {
+  BehaviorSubject,
+  catchError,
+  tap,
+  throwError,
+} from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { User } from './user.model';
 
 export interface AuthResponseData {
   idToken: string;
@@ -19,7 +26,9 @@ export class AuthService {
   private static SIGN_IN_URL = 'accounts:signInWithPassword?key=';
   private static KEY = environment.firebaseAPIKey;
 
-  constructor(private http: HttpClient) {}
+  userAuthenticatedSub = new BehaviorSubject<User>(null);
+
+  constructor(private http: HttpClient, private router: Router) {}
 
   signUpUser(email: string, password: string) {
     return this.http
@@ -27,7 +36,12 @@ export class AuthService {
         AuthService.BASE_URL + AuthService.SIGN_UP_URL + `${AuthService.KEY}`,
         { email: email, password: password, returnSecureToken: true }
       )
-      .pipe(catchError((errorReponse) => this.handleError(errorReponse)));
+      .pipe(
+        catchError((errorReponse) => this.handleError(errorReponse)),
+        tap((resData) => {
+          this.handleUserAuthenticationData(resData);
+        })
+      );
   }
 
   signInUser(email: string, password: string) {
@@ -36,10 +50,31 @@ export class AuthService {
         AuthService.BASE_URL + AuthService.SIGN_IN_URL + `${AuthService.KEY}`,
         { email: email, password: password, returnSecureToken: true }
       )
-      .pipe(catchError((errorReponse) => this.handleError(errorReponse)));
+      .pipe(
+        catchError((errorReponse) => this.handleError(errorReponse)),
+        tap((resData) => {
+          this.handleUserAuthenticationData(resData);
+        })
+      );
   }
 
-  private handleError(errorReponse: any){
+  logout() {
+    this.userAuthenticatedSub.next(null);
+    this.router.navigate(['/auth']);
+  }
+
+  private handleUserAuthenticationData(resData: AuthResponseData) {
+    const expDate = new Date(new Date().getTime() + +resData.expiresIn * 1000);
+    const user = new User(
+      resData.email,
+      resData.localId,
+      resData.idToken,
+      expDate
+    );
+    this.userAuthenticatedSub.next(user);
+  }
+
+  private handleError(errorReponse: any) {
     console.log(errorReponse);
     let errorMessage = 'An unknown error occured!';
     if (!errorReponse.error || !errorReponse.error.error) {
