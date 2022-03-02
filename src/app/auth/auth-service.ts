@@ -1,12 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  BehaviorSubject,
-  catchError,
-  tap,
-  throwError,
-} from 'rxjs';
+import { BehaviorSubject, catchError, tap, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { User } from './user.model';
 
@@ -27,6 +22,7 @@ export class AuthService {
   private static KEY = environment.firebaseAPIKey;
 
   userAuthenticatedSub = new BehaviorSubject<User>(null);
+  private tokenTimer: any;
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -60,7 +56,43 @@ export class AuthService {
 
   logout() {
     this.userAuthenticatedSub.next(null);
+    localStorage.removeItem('userData');
     this.router.navigate(['/auth']);
+    if (this.tokenTimer) {
+      clearTimeout(this.tokenTimer);
+    }
+    this.tokenTimer = null;
+  }
+
+  autoLogin() {
+    const userData: {
+      email: string;
+      id: string;
+      _accessToken: string;
+      _tokenExpDate: string;
+    } = JSON.parse(localStorage.getItem('userData'));
+    if (!userData) {
+      return;
+    }
+
+    const loadedUser = new User(
+      userData.email,
+      userData.id,
+      userData._accessToken,
+      new Date(userData._tokenExpDate)
+    );
+    if (loadedUser.token) {
+      this.userAuthenticatedSub.next(loadedUser);
+      const expirationIn =
+        new Date(userData._tokenExpDate).getTime() - new Date().getTime();
+      this.autologout(expirationIn);
+    }
+  }
+
+  autologout(expirationDuration: number) {
+    this.tokenTimer = setTimeout(() => {
+      this.logout();
+    }, expirationDuration);
   }
 
   private handleUserAuthenticationData(resData: AuthResponseData) {
@@ -72,6 +104,8 @@ export class AuthService {
       expDate
     );
     this.userAuthenticatedSub.next(user);
+    this.autologout(+resData.expiresIn * 1000);
+    localStorage.setItem('userData', JSON.stringify(user));
   }
 
   private handleError(errorReponse: any) {
