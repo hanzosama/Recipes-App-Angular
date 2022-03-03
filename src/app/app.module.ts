@@ -7,7 +7,6 @@ import { HeaderComponent } from './header/header.component';
 import { AppRoutingModule } from './app.routing.module';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AuthInterceptorService } from './auth/auth-interceptor';
-import { RecipeModule } from './recipes/recipe.module';
 import { ShoppingListModule } from './shopping-list/shopping-list.module';
 import { SharedModule } from './shared/shared.module';
 import { AuthModule } from './auth/auth.module';
@@ -20,11 +19,8 @@ import { AuthModule } from './auth/auth.module';
     ReactiveFormsModule,
     AppRoutingModule,
     HttpClientModule,
-    RecipeModule,
-    ShoppingListModule,
-    SharedModule,
-    AuthModule
-  ],
+    SharedModule
+    ],
   providers: [
     {
       provide: HTTP_INTERCEPTORS,
